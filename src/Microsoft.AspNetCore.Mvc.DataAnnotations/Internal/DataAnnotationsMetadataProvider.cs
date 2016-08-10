@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.Extensions.Localization;
 
 namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
 {
@@ -20,6 +21,19 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         IDisplayMetadataProvider,
         IValidationMetadataProvider
     {
+        private IStringLocalizerFactory _stringLocalizerFactory { get; set; }
+
+        public DataAnnotationsMetadataProvider()
+        {
+
+        }
+
+        public DataAnnotationsMetadataProvider(IStringLocalizerFactory stringLocalizerFactory)
+            : base()
+        {
+            _stringLocalizerFactory = stringLocalizerFactory;
+        }
+
         /// <inheritdoc />
         public void CreateBindingMetadata(BindingMetadataProviderContext context)
         {
@@ -52,6 +66,8 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             var scaffoldColumnAttribute = attributes.OfType<ScaffoldColumnAttribute>().FirstOrDefault();
             var uiHintAttribute = attributes.OfType<UIHintAttribute>().FirstOrDefault();
 
+            var localizer = _stringLocalizerFactory?.Create(context.Key.ContainerType ?? context.Key.ModelType);
+
             // Special case the [DisplayFormat] attribute hanging off an applied [DataType] attribute. This property is
             // non-null for DataType.Currency, DataType.Date, DataType.Time, and potentially custom [DataType]
             // subclasses. The DataType.Currency, DataType.Date, and DataType.Time [DisplayFormat] attributes have a
@@ -61,7 +77,6 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             {
                 displayFormatAttribute = dataTypeAttribute.DisplayFormat;
             }
-
             var displayMetadata = context.DisplayMetadata;
 
             // ConvertEmptyStringToNull
@@ -80,23 +95,18 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                 displayMetadata.DataTypeName = DataType.Html.ToString();
             }
 
-            // Description
-            if (displayAttribute != null)
-            {
-                displayMetadata.Description = () => displayAttribute.GetDescription();
-                displayMetadata.Placeholder = () => displayAttribute.GetPrompt();
-            }
-
             // DisplayFormatString
             if (displayFormatAttribute != null)
             {
                 displayMetadata.DisplayFormatString = displayFormatAttribute.DataFormatString;
             }
 
-            // DisplayName
+            // Display
             if (displayAttribute != null)
             {
-                displayMetadata.DisplayName = () => displayAttribute.GetName();
+                displayMetadata.Description = LocalizeAttributeProperty(displayAttribute.GetDescription, localizer);
+                displayMetadata.Placeholder = LocalizeAttributeProperty(displayAttribute.GetPrompt, localizer);
+                displayMetadata.DisplayName = LocalizeAttributeProperty(displayAttribute.GetName, localizer);
             }
 
             // EditFormatString
@@ -210,7 +220,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             // TemplateHint
             if (uiHintAttribute != null)
             {
-                displayMetadata.TemplateHint = uiHintAttribute.UIHint;
+                displayMetadata.TemplateHint = LocalizeAttributeProperty(() => { return uiHintAttribute.UIHint; }, localizer)();
             }
             else if (hiddenInputAttribute != null)
             {
@@ -245,6 +255,24 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                     context.ValidationMetadata.ValidatorMetadata.Add(attribute);
                 }
             }
+        }
+
+        private Func<string> LocalizeAttributeProperty(Func<string> GetProperty, IStringLocalizer localizer)
+        {
+            return () =>
+            {
+                var value = GetProperty();
+                if (!string.IsNullOrEmpty(value) && localizer != null)
+                {
+                    var localizedValue = localizer[value];
+                    if (value != localizedValue)
+                    {
+                        value = localizedValue;
+                    }
+                }
+
+                return value;
+            };
         }
 
         // Return non-empty name specified in a [Display] attribute for a field, if any; field.Name otherwise.
