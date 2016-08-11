@@ -23,13 +23,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
     {
         private IStringLocalizerFactory _stringLocalizerFactory { get; set; }
 
-        public DataAnnotationsMetadataProvider()
-        {
-
-        }
-
         public DataAnnotationsMetadataProvider(IStringLocalizerFactory stringLocalizerFactory)
-            : base()
         {
             _stringLocalizerFactory = stringLocalizerFactory;
         }
@@ -101,12 +95,49 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                 displayMetadata.DisplayFormatString = displayFormatAttribute.DataFormatString;
             }
 
-            // Display
+            // DisplayDescription
             if (displayAttribute != null)
             {
-                displayMetadata.Description = LocalizeAttributeProperty(displayAttribute.GetDescription, localizer);
-                displayMetadata.Placeholder = LocalizeAttributeProperty(displayAttribute.GetPrompt, localizer);
-                displayMetadata.DisplayName = LocalizeAttributeProperty(displayAttribute.GetName, localizer);
+                if (localizer != null &&
+                    !string.IsNullOrEmpty(displayAttribute.Name) &&
+                    displayAttribute.ResourceType == null)
+                {
+                    displayMetadata.Description = () => localizer[displayAttribute.GetDescription()].Value;
+                }
+                else
+                {
+                    displayMetadata.Description = () => displayAttribute.GetDescription();
+                }
+            }
+
+            // DisplayPrompt
+            if (displayAttribute != null)
+            {
+                if (localizer != null &&
+                    !string.IsNullOrEmpty(displayAttribute.Prompt) &&
+                    displayAttribute.ResourceType == null)
+                {
+                    displayMetadata.Placeholder = () => localizer[displayAttribute.GetPrompt()];
+                }
+                else
+                {
+                    displayMetadata.Placeholder = () => displayAttribute.GetPrompt();
+                }
+            }
+
+            // DisplayName
+            if (displayAttribute != null)
+            {
+                if (localizer != null &&
+                    !string.IsNullOrEmpty(displayAttribute.Name) &&
+                    displayAttribute.ResourceType == null)
+                {
+                    displayMetadata.DisplayName = () => localizer[displayAttribute.GetName()];
+                }
+                else
+                {
+                    displayMetadata.DisplayName = () => displayAttribute.GetName();
+                }
             }
 
             // EditFormatString
@@ -142,8 +173,8 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                     var value = ((Enum)field.GetValue(obj: null)).ToString("d");
 
                     groupedDisplayNamesAndValues.Add(new KeyValuePair<EnumGroupAndName, string>(
-                        new EnumGroupAndName(groupName, displayName),
-                        value));
+                                        new EnumGroupAndName(groupName, displayName),
+                                        value));
                     namesAndValues.Add(name, value);
                 }
 
@@ -220,7 +251,15 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             // TemplateHint
             if (uiHintAttribute != null)
             {
-                displayMetadata.TemplateHint = LocalizeAttributeProperty(() => { return uiHintAttribute.UIHint; }, localizer)();
+                if (localizer != null &&
+                    !string.IsNullOrEmpty(uiHintAttribute.UIHint))
+                {
+                    displayMetadata.TemplateHint = localizer[uiHintAttribute.UIHint];
+                }
+                else
+                {
+                    displayMetadata.TemplateHint = uiHintAttribute.UIHint;
+                }
             }
             else if (hiddenInputAttribute != null)
             {
@@ -255,24 +294,6 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                     context.ValidationMetadata.ValidatorMetadata.Add(attribute);
                 }
             }
-        }
-
-        private Func<string> LocalizeAttributeProperty(Func<string> GetProperty, IStringLocalizer localizer)
-        {
-            return () =>
-            {
-                var value = GetProperty();
-                if (!string.IsNullOrEmpty(value) && localizer != null)
-                {
-                    var localizedValue = localizer[value];
-                    if (value != localizedValue)
-                    {
-                        value = localizedValue;
-                    }
-                }
-
-                return value;
-            };
         }
 
         // Return non-empty name specified in a [Display] attribute for a field, if any; field.Name otherwise.

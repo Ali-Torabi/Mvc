@@ -16,7 +16,6 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public MvcDataAnnotationsMvcOptionsSetup(IServiceProvider serviceProvider)
             : base(options => ConfigureMvc(options, serviceProvider))
         {
-
         }
 
         public static void ConfigureMvc(MvcOptions options, IServiceProvider serviceProvider)

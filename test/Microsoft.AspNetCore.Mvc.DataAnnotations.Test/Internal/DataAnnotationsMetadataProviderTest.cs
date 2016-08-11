@@ -8,6 +8,8 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.Extensions.Localization;
+using Moq;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
@@ -58,7 +60,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             object expected)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var key = ModelMetadataIdentity.ForType(typeof(string));
             var context = new DisplayMetadataProviderContext(key, new ModelAttributes(new object[] { attribute }));
@@ -75,7 +77,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_FindsDisplayFormat_FromDataType()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var dataType = new DataTypeAttribute(DataType.Currency);
             var displayFormat = dataType.DisplayFormat; // Non-null for DataType.Currency.
@@ -95,7 +97,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_FindsDisplayFormat_OverridingDataType()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var dataType = new DataTypeAttribute(DataType.Time); // Has a non-null DisplayFormat.
             var displayFormat = new DisplayFormatAttribute() // But these values override the values from DataType
@@ -118,7 +120,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_EditableAttributeFalse_SetsReadOnlyTrue()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var editable = new EditableAttribute(allowEdit: false);
 
@@ -137,7 +139,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_EditableAttributeTrue_SetsReadOnlyFalse()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var editable = new EditableAttribute(allowEdit: true);
 
@@ -158,7 +160,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_DisplayAttribute_NameFromResources()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var display = new DisplayAttribute()
             {
@@ -187,7 +189,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_DisplayAttribute_DescriptionFromResources()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var display = new DisplayAttribute()
             {
@@ -211,6 +213,193 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             Assert.Equal("description from resources", context.DisplayMetadata.Description());
         }
 
+        [Fact]
+        public void CreateDisplayMetadata_DisplayAttribute_NullLocalizer()
+        {
+            // Arrange
+            var provider = new DataAnnotationsMetadataProvider(null);
+
+            var display = new DisplayAttribute()
+            {
+                Name = "Model_Name",
+                Description = "Model_Description",
+                Prompt = "Model_Prompt"
+            };
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("Model_Name", context.DisplayMetadata.DisplayName());
+            Assert.Equal("Model_Description", context.DisplayMetadata.Description());
+            Assert.Equal("Model_Prompt", context.DisplayMetadata.Placeholder());
+        }
+
+        [Fact]
+        public void CreateDisplayMetadata_DisplayAttribute_LocalizerMissingProperties()
+        {
+            // Arrange
+            var stringLocalizer = new Mock<IStringLocalizer>(MockBehavior.Strict);
+            stringLocalizer
+                .Setup(s => s["Model_Name"])
+                .Returns(new LocalizedString("Model_Name", "Model_Name"));
+            stringLocalizer
+                .Setup(s => s["Model_Description"])
+                .Returns(new LocalizedString("Model_Description", "Model_Description"));
+            stringLocalizer
+                .Setup(s => s["Model_Prompt"])
+                .Returns(new LocalizedString("Model_Prompt", "Model_Prompt"));
+
+            var stringLocalizerFactory = new Mock<IStringLocalizerFactory>(MockBehavior.Strict);
+            stringLocalizerFactory
+                .Setup(f => f.Create(It.IsAny<Type>()))
+                .Returns(stringLocalizer.Object);
+
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory.Object);
+
+            var display = new DisplayAttribute()
+            {
+                Name = "Model_Name",
+                Description = "Model_Description",
+                Prompt = "Model_Prompt"
+            };
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("Model_Name", context.DisplayMetadata.DisplayName());
+            Assert.Equal("Model_Description", context.DisplayMetadata.Description());
+            Assert.Equal("Model_Prompt", context.DisplayMetadata.Placeholder());
+        }
+
+        [Fact]
+        public void CreateDisplayMetadata_DisplayAttribute_LocalizeProperties()
+        {
+            // Arrange
+            var stringLocalizer = new Mock<IStringLocalizer>(MockBehavior.Strict);
+            stringLocalizer
+                .Setup(s => s["Model_Name"])
+                .Returns(new LocalizedString("Model_Name", "name from resources"));
+            stringLocalizer
+                .Setup(s => s["Model_Description"])
+                .Returns(new LocalizedString("Model_Description", "description from resources"));
+            stringLocalizer
+                .Setup(s => s["Model_Prompt"])
+                .Returns(new LocalizedString("Model_Prompt", "prompt from resources"));
+
+            var stringLocalizerFactory = new Mock<IStringLocalizerFactory>(MockBehavior.Strict);
+            stringLocalizerFactory
+                .Setup(f => f.Create(It.IsAny<Type>()))
+                .Returns(stringLocalizer.Object);
+
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory.Object);
+
+            var display = new DisplayAttribute()
+            {
+                Name = "Model_Name",
+                Description = "Model_Description",
+                Prompt = "Model_Prompt"
+            };
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("name from resources", context.DisplayMetadata.DisplayName());
+            Assert.Equal("description from resources", context.DisplayMetadata.Description());
+            Assert.Equal("prompt from resources", context.DisplayMetadata.Placeholder());
+        }
+
+        [Fact]
+        public void CreateDisplayMetadata_UIHintAttribute_LocalizeUiHint()
+        {
+            // Arrange
+            var stringLocalizer = new Mock<IStringLocalizer>(MockBehavior.Strict);
+            stringLocalizer
+                .Setup(s => s["Model_UIHint"])
+                .Returns(new LocalizedString("Model_UIHint", "uihint from resource"));
+
+            var stringLocalizerFactory = new Mock<IStringLocalizerFactory>(MockBehavior.Strict);
+            stringLocalizerFactory
+                .Setup(f => f.Create(It.IsAny<Type>()))
+                .Returns(stringLocalizer.Object);
+
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory.Object);
+
+            var display = new UIHintAttribute("Model_UIHint");
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("uihint from resource", context.DisplayMetadata.TemplateHint);
+        }
+
+        [Fact]
+        public void CreateDisplayMetadata_UIHintAttribute_LocalizerMissingProperties()
+        {
+            // Arrange
+            var stringLocalizer = new Mock<IStringLocalizer>(MockBehavior.Strict);
+            stringLocalizer
+                .Setup(s => s["Model_UIHint"])
+                .Returns(new LocalizedString("Model_UIHint", "Model_UIHint"));
+
+            var stringLocalizerFactory = new Mock<IStringLocalizerFactory>(MockBehavior.Strict);
+            stringLocalizerFactory
+                .Setup(f => f.Create(It.IsAny<Type>()))
+                .Returns(stringLocalizer.Object);
+
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory.Object);
+
+            var display = new UIHintAttribute("Model_UIHint");
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("Model_UIHint", context.DisplayMetadata.TemplateHint);
+        }
+
+        [Fact]
+        public void CreateDisplayMetadata_UIHintAttribute_NullLocalizer()
+        {
+            // Arrange
+            var provider = new DataAnnotationsMetadataProvider(null);
+
+            var display = new UIHintAttribute("Model_UIHint");
+
+            var attributes = new Attribute[] { display };
+            var key = ModelMetadataIdentity.ForType(typeof(DataAnnotationsMetadataProviderTest));
+            var context = new DisplayMetadataProviderContext(key, new ModelAttributes(attributes));
+
+            // Act
+            provider.CreateDisplayMetadata(context);
+
+            // Assert
+            Assert.Equal("Model_UIHint", context.DisplayMetadata.TemplateHint);
+        }
+
         [Theory]
         [InlineData(typeof(EmptyClass), false)]
         [InlineData(typeof(ClassWithFields), false)]
@@ -232,7 +421,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_IsEnum_ReflectsModelType(Type type, bool expectedIsEnum)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -266,7 +455,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_IsFlagsEnum_ReflectsModelType(Type type, bool expectedIsFlagsEnum)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -398,7 +587,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             IReadOnlyDictionary<string, string> expectedDictionary)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -532,7 +721,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             IEnumerable<KeyValuePair<EnumGroupAndName, string>> expectedKeyValuePairs)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -554,7 +743,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationMetadata_RequiredAttribute_SetsIsRequiredToTrue()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var required = new RequiredAttribute();
 
@@ -576,7 +765,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationMetadata_NoRequiredAttribute_IsRequiredLeftAlone(bool? initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var attributes = new Attribute[] { };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -597,7 +786,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_RequiredAttribute_IsBindingRequiredLeftAlone(bool initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var attributes = new Attribute[] { new RequiredAttribute() };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -618,7 +807,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingDetails_NoEditableAttribute_IsReadOnlyLeftAlone(bool? initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var attributes = new Attribute[] { };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -636,7 +825,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationDetails_ValidatableObject_ReturnsObject()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var attribute = new TestValidationAttribute();
             var attributes = new Attribute[] { attribute };
@@ -655,7 +844,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationDetails_ValidatableObject_AlreadyInContext_Ignores()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider();
+            var provider = new DataAnnotationsMetadataProvider(null);
 
             var attribute = new TestValidationAttribute();
             var attributes = new Attribute[] { attribute };
