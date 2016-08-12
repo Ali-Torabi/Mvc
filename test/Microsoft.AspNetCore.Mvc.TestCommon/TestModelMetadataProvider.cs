@@ -20,7 +20,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding
             {
                 new DefaultBindingMetadataProvider(),
                 new DefaultValidationMetadataProvider(),
-                new DataAnnotationsMetadataProvider(null),
+                new DataAnnotationsMetadataProvider(stringLocalizerFactory: null),
                 new DataMemberRequiredBindingMetadataProvider(),
             };
 
@@ -34,7 +34,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding
             {
                 new DefaultBindingMetadataProvider(),
                 new DefaultValidationMetadataProvider(),
-                new DataAnnotationsMetadataProvider(null),
+                new DataAnnotationsMetadataProvider(stringLocalizerFactory: null),
                 new DataMemberRequiredBindingMetadataProvider(),
             };
 
@@ -69,7 +69,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding
                   {
                       new DefaultBindingMetadataProvider(),
                       new DefaultValidationMetadataProvider(),
-                      new DataAnnotationsMetadataProvider(null),
+                      new DataAnnotationsMetadataProvider(stringLocalizerFactory: null),
                       detailsProvider
                   }),
                   new TestOptionsManager<MvcOptions>())

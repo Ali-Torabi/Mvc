@@ -71,6 +71,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             {
                 displayFormatAttribute = dataTypeAttribute.DisplayFormat;
             }
+
             var displayMetadata = context.DisplayMetadata;
 
             // ConvertEmptyStringToNull
@@ -89,17 +90,11 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                 displayMetadata.DataTypeName = DataType.Html.ToString();
             }
 
-            // DisplayFormatString
-            if (displayFormatAttribute != null)
-            {
-                displayMetadata.DisplayFormatString = displayFormatAttribute.DataFormatString;
-            }
-
-            // DisplayDescription
+            // Description
             if (displayAttribute != null)
             {
                 if (localizer != null &&
-                    !string.IsNullOrEmpty(displayAttribute.Name) &&
+                    !string.IsNullOrEmpty(displayAttribute.Description) &&
                     displayAttribute.ResourceType == null)
                 {
                     displayMetadata.Description = () => localizer[displayAttribute.GetDescription()].Value;
@@ -110,7 +105,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                 }
             }
 
-            // DisplayPrompt
+            // Placeholder
             if (displayAttribute != null)
             {
                 if (localizer != null &&
@@ -138,6 +133,12 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                 {
                     displayMetadata.DisplayName = () => displayAttribute.GetName();
                 }
+            }
+
+            // DisplayFormatString
+            if (displayFormatAttribute != null)
+            {
+                displayMetadata.DisplayFormatString = displayFormatAttribute.DataFormatString;
             }
 
             // EditFormatString
@@ -173,8 +174,8 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
                     var value = ((Enum)field.GetValue(obj: null)).ToString("d");
 
                     groupedDisplayNamesAndValues.Add(new KeyValuePair<EnumGroupAndName, string>(
-                                        new EnumGroupAndName(groupName, displayName),
-                                        value));
+                        new EnumGroupAndName(groupName, displayName),
+                        value));
                     namesAndValues.Add(name, value);
                 }
 

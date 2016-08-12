@@ -60,7 +60,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             object expected)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var key = ModelMetadataIdentity.ForType(typeof(string));
             var context = new DisplayMetadataProviderContext(key, new ModelAttributes(new object[] { attribute }));
@@ -77,7 +77,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_FindsDisplayFormat_FromDataType()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var dataType = new DataTypeAttribute(DataType.Currency);
             var displayFormat = dataType.DisplayFormat; // Non-null for DataType.Currency.
@@ -97,7 +97,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_FindsDisplayFormat_OverridingDataType()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var dataType = new DataTypeAttribute(DataType.Time); // Has a non-null DisplayFormat.
             var displayFormat = new DisplayFormatAttribute() // But these values override the values from DataType
@@ -120,7 +120,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_EditableAttributeFalse_SetsReadOnlyTrue()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var editable = new EditableAttribute(allowEdit: false);
 
@@ -139,7 +139,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_EditableAttributeTrue_SetsReadOnlyFalse()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var editable = new EditableAttribute(allowEdit: true);
 
@@ -160,7 +160,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_DisplayAttribute_NameFromResources()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var display = new DisplayAttribute()
             {
@@ -189,7 +189,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_DisplayAttribute_DescriptionFromResources()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var display = new DisplayAttribute()
             {
@@ -217,7 +217,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_DisplayAttribute_NullLocalizer()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var display = new DisplayAttribute()
             {
@@ -385,7 +385,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_UIHintAttribute_NullLocalizer()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var display = new UIHintAttribute("Model_UIHint");
 
@@ -421,7 +421,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_IsEnum_ReflectsModelType(Type type, bool expectedIsEnum)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -455,7 +455,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateDisplayMetadata_IsFlagsEnum_ReflectsModelType(Type type, bool expectedIsFlagsEnum)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -587,7 +587,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             IReadOnlyDictionary<string, string> expectedDictionary)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -721,7 +721,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             IEnumerable<KeyValuePair<EnumGroupAndName, string>> expectedKeyValuePairs)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var key = ModelMetadataIdentity.ForType(type);
             var attributes = new object[0];
@@ -743,7 +743,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationMetadata_RequiredAttribute_SetsIsRequiredToTrue()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var required = new RequiredAttribute();
 
@@ -765,7 +765,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationMetadata_NoRequiredAttribute_IsRequiredLeftAlone(bool? initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var attributes = new Attribute[] { };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -786,7 +786,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingMetadata_RequiredAttribute_IsBindingRequiredLeftAlone(bool initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var attributes = new Attribute[] { new RequiredAttribute() };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -807,7 +807,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateBindingDetails_NoEditableAttribute_IsReadOnlyLeftAlone(bool? initialValue)
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var attributes = new Attribute[] { };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
@@ -825,7 +825,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationDetails_ValidatableObject_ReturnsObject()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var attribute = new TestValidationAttribute();
             var attributes = new Attribute[] { attribute };
@@ -844,7 +844,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
         public void CreateValidationDetails_ValidatableObject_AlreadyInContext_Ignores()
         {
             // Arrange
-            var provider = new DataAnnotationsMetadataProvider(null);
+            var provider = new DataAnnotationsMetadataProvider(stringLocalizerFactory: null);
 
             var attribute = new TestValidationAttribute();
             var attributes = new Attribute[] { attribute };
