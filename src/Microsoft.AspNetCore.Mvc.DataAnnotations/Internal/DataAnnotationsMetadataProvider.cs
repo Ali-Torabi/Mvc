@@ -252,15 +252,7 @@ namespace Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
             // TemplateHint
             if (uiHintAttribute != null)
             {
-                if (localizer != null &&
-                    !string.IsNullOrEmpty(uiHintAttribute.UIHint))
-                {
-                    displayMetadata.TemplateHint = localizer[uiHintAttribute.UIHint];
-                }
-                else
-                {
-                    displayMetadata.TemplateHint = uiHintAttribute.UIHint;
-                }
+                displayMetadata.TemplateHint = uiHintAttribute.UIHint;
             }
             else if (hiddenInputAttribute != null)
             {
